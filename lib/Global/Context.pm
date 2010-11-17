@@ -38,7 +38,6 @@ sub ctx_push {
     unless Scalar::Util::blessed($frame);
 
   return $Object->with_pushed_frame($frame);
-  $Object = Global::Context::Env::Basic->new($arg);
 }
 
 sub _export_context_glob {
