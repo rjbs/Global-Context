@@ -18,6 +18,7 @@ use Global::Context::StackFrame::Trivial;
 sub ctx_init {
   my ($arg) = @_;
   confess("context has already been initialized") if $Object;
+
   $Object = Global::Context::Env::Basic->new($arg)->with_pushed_frame(
     Global::Context::StackFrame::Trivial->new({
       description => Carp::shortmess("context initialized"),
@@ -37,6 +38,7 @@ sub ctx_push {
     unless Scalar::Util::blessed($frame);
 
   return $Object->with_pushed_frame($frame);
+  $Object = Global::Context::Env::Basic->new($arg);
 }
 
 sub _export_context_glob {
