@@ -2,6 +2,9 @@ use strict;
 use warnings;
 package Global::Context;
 
+use Global::Context::Env::Basic;
+use Global::Context::StackFrame::Trivial;
+
 our $Object;
 
 use Sub::Exporter -setup => {
@@ -12,8 +15,22 @@ use Sub::Exporter -setup => {
   collectors => { '$Context' => \'_export_context_glob' },
 };
 
-use Global::Context::Env::Basic;
-use Global::Context::StackFrame::Trivial;
+sub _export_context_glob {
+  my ($self, $value, $data) = @_;
+
+  my $name;
+  $name = $value->{'-as'} || 'Context';
+  $name =~ s/^\$//;
+
+  my $sym = "$data->{into}::$name";
+
+  {
+    no strict 'refs';
+    *{$sym} = *Global::Context::Object;
+  }
+
+  return 1;
+}
 
 sub ctx_init {
   my ($arg) = @_;
@@ -38,20 +55,6 @@ sub ctx_push {
     unless Scalar::Util::blessed($frame);
 
   return $Object->with_pushed_frame($frame);
-}
-
-sub _export_context_glob {
-  my ($self, $value, $data) = @_;
-
-  $value  = 'Context' unless defined $value;
-  my $sym = "$data->{into}::$value";
-
-  {
-    no strict 'refs';
-    *{$sym} = *Global::Context::Object;
-  }
-
-  return 1;
 }
 
 1;

@@ -1,8 +1,6 @@
 use strict;
 use warnings;
 
-package X;
-
 use Test::More;
 
 use Global::Context qw($Context);
@@ -24,5 +22,19 @@ is($Global::Context::Object, 2, 'we updated $Context so $G::C is updated');
 
 is($Context, 2, 'localization over ($Context)');
 is($Global::Context::Object, 2, 'localization over ($G::C::Object)');
+
+{
+  package Renamed;
+  use Global::Context q($Context) => { -as => 'Ctx' };
+
+  main::is($Ctx, 2, 'imported $Context as Ctx');
+}
+
+{
+  package Renamed::Sigiled;
+  use Global::Context q($Context) => { -as => '$Ctx' };
+
+  main::is($Ctx, 2, 'imported $Context as $Ctx');
+}
 
 done_testing;
