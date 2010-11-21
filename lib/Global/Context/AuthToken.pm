@@ -13,7 +13,7 @@ sub as_string { $_[0]->uri }
 
 has agent => (
   is   => 'ro',
-  isa  => 'Str',
+  isa  => 'Defined',
   required => 1,
 );
 

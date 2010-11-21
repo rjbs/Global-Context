@@ -59,4 +59,28 @@ like(
   like($frames[0], qr/^context initialized/, '...the ctx_init frame again');
 }
 
+{
+  local $Context = ctx_push({ description => "eat some pie" });
+
+  {
+    my @frames = map {; $_->as_string } $Context->stack->frames;
+    is(@frames, 1, 'after pushing a frame (hashref), the first is gone');
+    is($frames[0], 'eat some pie', '...only our new frame remains');
+  }
+}
+
+{
+  local $Context = ctx_push(
+    Global::Context::StackFrame::Trivial->new({
+      description => "eat some pie"
+    })
+  );
+
+  {
+    my @frames = map {; $_->as_string } $Context->stack->frames;
+    is(@frames, 1, 'after pushing a frame (object), the first is gone');
+    is($frames[0], 'eat some pie', '...only our new frame remains');
+  }
+}
+
 done_testing;
