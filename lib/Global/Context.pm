@@ -2,6 +2,7 @@ use strict;
 use warnings;
 package Global::Context;
 
+use Carp ();
 use Global::Context::Env::Basic;
 use Global::Context::StackFrame::Trivial;
 
@@ -34,7 +35,7 @@ sub _export_context_glob {
 
 sub ctx_init {
   my ($arg) = @_;
-  confess("context has already been initialized") if $Object;
+  Carp::confess("context has already been initialized") if $Object;
 
   $Object = Global::Context::Env::Basic->new($arg)->with_pushed_frame(
     Global::Context::StackFrame::Trivial->new({
