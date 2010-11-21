@@ -27,6 +27,30 @@ like(
   my @frames = map {; $_->as_string } $Context->stack->frames;
   is(@frames, 1, "there's one frame, to start with");
   like($frames[0], qr/^context initialized/, '...it is the ctx_init frame');
+
+  is(
+    $Context->auth_token->agent,
+    'customer://abcdef',
+    '...the agent we specified'
+  );
+
+  is(
+    $Context->auth_token->uri,
+    'websession://1234',
+    '...the token we specified',
+  );
+
+  is(
+    $Context->auth_token->as_string,
+    'websession://1234',
+    '...the token stringification we expect',
+  );
+
+  is(
+    $Context->terminal->as_string,
+    'ip://1.2.3.4',
+    '...the terminal stringification we expect',
+  );
 }
 
 {
