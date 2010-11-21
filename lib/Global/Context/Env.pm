@@ -1,6 +1,8 @@
 package Global::Context::Env;
 use Moose::Role;
 
+with 'MooseX::Clone';
+
 use Global::Context::Stack::Basic;
 
 use namespace::autoclean;
@@ -12,7 +14,7 @@ has auth_token => (
 );
 
 sub agent {
-  return undef unless $_[0]->auth_token;
+  return undef unless $_[0]->has_auth_token;
   return $_[0]->auth_token->agent;
 }
 
@@ -32,11 +34,9 @@ has stack => (
 sub with_pushed_frame {
   my ($self, $frame) = @_;
 
-  return $self->meta->name->new({
-    terminal => $self->terminal,
-    stack    => $self->stack->with_pushed_frame($frame),
-    ($self->has_auth_token ? (auth_token => $self->auth_token) : ()),
-  });
+  return $self->clone(
+    stack => $self->stack->with_pushed_frame($frame),
+  );
 }
 
 1;
