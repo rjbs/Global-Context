@@ -31,9 +31,12 @@ like(
 
 {
   local $Context = ctx_push("eat some pie");
-  my @frames = map {; $_->as_string } $Context->stack->frames;
-  is(@frames, 1, 'after pushing a frame, the first is gone');
-  is($frames[0], 'eat some pie', '...only our new frame remains');
+
+  {
+    my @frames = map {; $_->as_string } $Context->stack->frames;
+    is(@frames, 1, 'after pushing a frame, the first is gone');
+    is($frames[0], 'eat some pie', '...only our new frame remains');
+  }
 
   {
     local $Context = ctx_push("drink some coffee");
@@ -41,6 +44,12 @@ like(
     is(@frames, 2, 'after pushing another frame, we have two frames');
     is($frames[0], 'eat some pie',      '...0th frame is what we expect');
     is($frames[1], 'drink some coffee', '...1st frame is what we expect');
+  }
+
+  {
+    my @frames = map {; $_->as_string } $Context->stack->frames;
+    is(@frames, 1, 'after leaving deeper context, one frame in stack');
+    is($frames[0], 'eat some pie', '...and it is the one we expect');
   }
 }
 
