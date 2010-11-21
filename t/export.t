@@ -30,11 +30,4 @@ is($Global::Context::Object, 2, 'localization over ($G::C::Object)');
   main::is($Ctx, 2, 'imported $Context as Ctx');
 }
 
-{
-  package Renamed::Sigiled;
-  use Global::Context q($Context) => { -as => '$Ctx' };
-
-  main::is($Ctx, 2, 'imported $Context as $Ctx');
-}
-
 done_testing;
