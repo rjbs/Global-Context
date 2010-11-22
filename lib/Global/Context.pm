@@ -9,12 +9,23 @@ use Sub::Exporter::Util ();
 
 {
   package Sub::Exporter::GlobSharer;
+  use Scalar::Util ();
+
+  my $is_ref = sub {
+    return(
+      !  Scalar::Util::blessed($_[0])
+      && Scalar::Util::reftype($_[0]) eq $_[1]
+    );
+  };
 
   sub glob_export_collector {
     my ($default_name, $globref) = @_;
 
     return sub {
       my ($value, $data) = @_;
+      my $globref = $is_ref->($globref, 'GLOB')   ? $globref
+                  : $is_ref->($globref, 'SCALAR') ? $data->{class}->$$globref
+                  : Carp::confess "illegal glob locator";
 
       my $name;
       $name = defined $value->{'-as'} ? $value->{'-as'} : $default_name;
@@ -39,16 +50,21 @@ use Sub::Exporter -setup => {
   ],
   collectors => {
     '$Context' => Sub::Exporter::GlobSharer::glob_export_collector(
-      Context => \*Object,
+      Context => \'common_globref',
     )
   },
 };
+
+sub common_globref { \*Object }
 
 sub default_context_class { 'Global::Context::Env::Basic' }
 sub default_frame_class   { 'Global::Context::StackFrame::Trivial' }
 
 sub _build_ctx_init {
   my ($class, $name, $arg, $col) = @_;
+
+  Carp::croak("can't import $name without importing \$Context")
+    unless $col->{'$Context'};
 
   return sub {
     my ($arg) = @_;
@@ -69,6 +85,9 @@ sub _build_ctx_init {
 
 sub _build_ctx_push {
   my ($class, $name, $arg, $col) = @_;
+
+  Carp::croak("can't import $name without importing \$Context")
+    unless $col->{'$Context'};
 
   return sub {
     my ($frame) = @_;
