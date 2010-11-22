@@ -11,21 +11,26 @@ use Sub::Exporter::Util ();
   package Sub::Exporter::GlobSharer;
   use Scalar::Util ();
 
-  my $is_ref = sub {
-    return(
-      !  Scalar::Util::blessed($_[0])
-      && Scalar::Util::reftype($_[0]) eq $_[1]
-    );
-  };
+  my $is_ref;
+  BEGIN {
+    $is_ref = sub {
+      return(
+        !  Scalar::Util::blessed($_[0])
+        && Scalar::Util::reftype($_[0]) eq $_[1]
+      );
+    };
+  }
 
-  sub glob_export_collector {
+  sub glob_exporter {
     my ($default_name, $globref) = @_;
+
+    my $globref_method = $is_ref->($globref, 'GLOB')   ? sub { $globref }
+                       : $is_ref->($globref, 'SCALAR') ? $$globref
+                       : Carp::confess("illegal glob locator '$globref'");
 
     return sub {
       my ($value, $data) = @_;
-      my $globref = $is_ref->($globref, 'GLOB')   ? $globref
-                  : $is_ref->($globref, 'SCALAR') ? $data->{class}->$$globref
-                  : Carp::confess "illegal glob locator";
+      my $globref = $data->{class}->$globref_method;
 
       my $name;
       $name = defined $value->{'-as'} ? $value->{'-as'} : $default_name;
@@ -49,7 +54,7 @@ use Sub::Exporter -setup => {
     ctx_push => \'_build_ctx_push',
   ],
   collectors => {
-    '$Context' => Sub::Exporter::GlobSharer::glob_export_collector(
+    '$Context' => Sub::Exporter::GlobSharer::glob_exporter(
       Context => \'common_globref',
     )
   },
