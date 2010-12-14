@@ -95,7 +95,7 @@ like(
 
 {
   local $Context = ctx_push(
-    Global::Context::StackFrame::Trivial->new({
+    Global::Context::StackFrame::Basic->new({
       description => "eat some pie"
     })
   );

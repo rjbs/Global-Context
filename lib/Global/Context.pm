@@ -1,52 +1,77 @@
 use strict;
 use warnings;
 package Global::Context;
+# ABSTRACT: track the global execution context of your code
 
 use Carp ();
 use Global::Context::Env::Basic;
-use Global::Context::StackFrame::Trivial;
-use Sub::Exporter::Util ();
+use Global::Context::StackFrame::Basic;
+use Sub::Exporter::GlobExporter ();
 
-{
-  package Sub::Exporter::GlobSharer;
-  use Scalar::Util ();
+=head1 OVERVIEW
 
-  my $is_ref;
-  BEGIN {
-    $is_ref = sub {
-      return(
-        !  Scalar::Util::blessed($_[0])
-        && Scalar::Util::reftype($_[0]) eq $_[1]
-      );
-    };
+B<WARNING!>  This code is B<very> young and experimental.  Its interface may
+change drastically as it is proven.
+
+Global::Context is a system for tracking the context under which a program is
+currently running.  It establishes a globally-accessible object that tracks the 
+current user, authentication information, request originator, and execution
+stack.
+
+This object can be replaced locally (within dynamic scopes) to affect pushes
+and pops against is stack, but is otherwise meant to be immutable once created.
+
+  use Global::Context -all, '$Context';
+
+  ctx_init({
+    terminal => Global::Context::Terminal::Basic->new({ uri => 'ip://1.2.3.4' }),
+    auth_token => Global::Context::AuthToken::Basic->new({
+      uri   => 'websession://1234',
+      agent => 'customer://abcdef',
+    }),
+  });
+
+  sub eat_pie {
+    my ($self) = @_;
+
+    local $Context = ctx_push("eating pie");
+    
+    ...;
   }
 
-  sub glob_exporter {
-    my ($default_name, $globref) = @_;
+  eat_pie;
 
-    my $globref_method = $is_ref->($globref, 'GLOB')   ? sub { $globref }
-                       : $is_ref->($globref, 'SCALAR') ? $$globref
-                       : Carp::confess("illegal glob locator '$globref'");
+=head2 Exports
 
-    return sub {
-      my ($value, $data) = @_;
-      my $globref = $data->{class}->$globref_method;
+If C<$Context> is requested as an import, a package variable is added, aliasing
+a shared global.  It can be localized as needed, affecting the global value.
+This feature is provided by L<Sub::Exporter::GlobExporter>.
 
-      my $name;
-      $name = defined $value->{'-as'} ? $value->{'-as'} : $default_name;
+The shared globref is provided by the C<common_globref> method, which can
+return a different globref in other subclasses to allow multiple global
+contexts to exist in one interpreter.
 
-      my $sym = "$data->{into}::$name";
+The C<ctx_init> and C<ctx_push> routines are exported by request or as part of
+the C<-all> group.
 
-      {
-        no strict 'refs';
-        *{$sym} = *$globref;
-      }
+C<ctx_init> takes the same arguments as the constructor for the default context
+class (by default L<Global::Context::Env::Basic>) and sets up the initial
+environment.  If C<ctx_init> is called after the environment has already been
+configured, it is fatal.
 
-      $_[0] = $globref;
-      return 1;
-    }
+C<ctx_push> takes either a stack frame (something that does
+L<Global::Context::StackFrame>), the arguments to a construct a new
+Global::Context::StackFrame::Basic, or a stack frame description.  It returns a
+new global context object, just like the current but with an extra stack frame.
+It's meant to be called like this:
+
+  {
+    local $Context = ctx_push("preferences subsystem");
+
+    ...
   }
-}
+
+=cut
 
 use Sub::Exporter -setup => {
   exports    => [
@@ -54,16 +79,36 @@ use Sub::Exporter -setup => {
     ctx_push => \'_build_ctx_push',
   ],
   collectors => {
-    '$Context' => Sub::Exporter::GlobSharer::glob_exporter(
+    '$Context' => Sub::Exporter::GlobExporter::glob_exporter(
       Context => \'common_globref',
     )
   },
 };
 
+=head1 METHODS
+
+=head2 common_globref
+
+This returns the globref in which the context object is stored.  This method
+can be replaced in subclasses to allow multiple global contexts to operate in
+one program.
+
+=cut
+
 sub common_globref { \*Object }
 
+=head2 default_context_class
+
+=head2 default_frame_class
+
+These methods name the default classes for new context objects and stack
+frames.  They default to Global::Context::Env::Basic and
+Global::Context::StackFrame::Basic, by default.
+
+=cut
+
 sub default_context_class { 'Global::Context::Env::Basic' }
-sub default_frame_class   { 'Global::Context::StackFrame::Trivial' }
+sub default_frame_class   { 'Global::Context::StackFrame::Basic' }
 
 sub _build_ctx_init {
   my ($class, $name, $arg, $col) = @_;
