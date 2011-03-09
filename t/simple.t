@@ -68,6 +68,7 @@ like(
     is(@frames, 2, 'after pushing another frame, we have two frames');
     is($frames[0], 'eat some pie',      '...0th frame is what we expect');
     is($frames[1], 'drink some coffee', '...1st frame is what we expect');
+    is("@frames", join(" ", $Context->stack_trace), "->stack_trace method");
   }
 
   {

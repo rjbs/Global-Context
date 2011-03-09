@@ -73,6 +73,18 @@ has stack => (
   default  => sub { Global::Context::Stack::Basic->new },
 );
 
+=method
+
+C<< ->stack_trace >> is a convenience method that returns a list
+containing the string representation of each frame in the stack.
+
+=cut
+
+sub stack_trace {
+  my ($self) = @_;
+  map $_->as_string, $self->stack->frames;
+}
+
 sub with_pushed_frame {
   my ($self, $frame) = @_;
 
