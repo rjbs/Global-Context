@@ -142,6 +142,9 @@ sub _build_ctx_push {
   return sub {
     my ($frame) = @_;
 
+    Carp::croak("Can't push frame onto uninitialized context")
+        unless defined ${ *{ $col->{'$Context'} }{SCALAR} };
+
     $frame = { description => $frame } unless ref $frame;
 
     $frame = $class->default_frame_class->new($frame)
