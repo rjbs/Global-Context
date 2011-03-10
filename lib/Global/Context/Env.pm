@@ -73,7 +73,7 @@ has stack => (
   default  => sub { Global::Context::Stack::Basic->new },
 );
 
-=method
+=method stack_trace
 
 C<< ->stack_trace >> is a convenience method that returns a list
 containing the string representation of each frame in the stack.
