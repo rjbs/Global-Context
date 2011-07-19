@@ -31,6 +31,7 @@ has frames => (
   default => sub { [] },
   handles => {
     frames => 'elements',
+    top    => [ get => -1 ],
   },
 );
 
