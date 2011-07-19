@@ -30,8 +30,8 @@ has frames => (
   traits => [ 'Array' ],
   default => sub { [] },
   handles => {
-    frames => 'elements',
-    top    => [ get => -1 ],
+    frames        => 'elements',
+    current_frame => [ get => -1 ],
   },
 );
 
